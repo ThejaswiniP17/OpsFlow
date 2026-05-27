@@ -1,0 +1,271 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - OpsFlow{% endblock %}
+{% block page_header %}Dashboard Overview{% endblock %}
+
+{% block content %}
+<!-- Stats Cards Row -->
+<div class="row mb-4 fade-in-up">
+    <!-- Total Tasks -->
+    <div class="col-md-6 col-lg-3 mb-3">
+        <div class="stat-card pending shadow-sm">
+            <span class="text-muted small fw-bold text-uppercase">Total Scoped Tasks</span>
+            <h2 class="fw-bold mb-0 mt-2 text-primary">{{ total_tasks }}</h2>
+            <i class="fa-solid fa-list-check stat-icon text-primary"></i>
+        </div>
+    </div>
+    <!-- Pending -->
+    <div class="col-md-6 col-lg-3 mb-3">
+        <div class="stat-card progress shadow-sm">
+            <span class="text-muted small fw-bold text-uppercase">Pending / In Progress</span>
+            <h2 class="fw-bold mb-0 mt-2 text-primary">{{ pending_tasks }}</h2>
+            <i class="fa-solid fa-hourglass-half stat-icon text-warning"></i>
+        </div>
+    </div>
+    <!-- Completed -->
+    <div class="col-md-6 col-lg-3 mb-3">
+        <div class="stat-card completed shadow-sm">
+            <span class="text-muted small fw-bold text-uppercase">Completed Tasks</span>
+            <h2 class="fw-bold mb-0 mt-2 text-success">{{ completed_tasks }}</h2>
+            <i class="fa-solid fa-circle-check stat-icon text-success"></i>
+        </div>
+    </div>
+    <!-- Overdue -->
+    <div class="col-md-6 col-lg-3 mb-3">
+        <div class="stat-card blocked shadow-sm">
+            <span class="text-muted small fw-bold text-uppercase">Overdue Alerts</span>
+            <h2 class="fw-bold mb-0 mt-2 text-danger">{{ overdue_tasks }}</h2>
+            <i class="fa-solid fa-calendar-times stat-icon text-danger"></i>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Section -->
+<div class="row mb-4 fade-in-up">
+    <!-- Doughnut: Tasks by Status -->
+    <div class="col-lg-4 mb-4">
+        <div class="card shadow-sm border-0 h-100">
+            <div class="card-header bg-white border-bottom p-4">
+                <h6 class="fw-bold mb-0 text-primary">Workflows Status Breakdown</h6>
+            </div>
+            <div class="card-body p-4 d-flex align-items-center justify-content-center">
+                <div style="position: relative; height: 220px; width: 100%;">
+                    <canvas id="statusChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bar Chart: Tasks by Priority -->
+    <div class="col-lg-4 mb-4">
+        <div class="card shadow-sm border-0 h-100">
+            <div class="card-header bg-white border-bottom p-4">
+                <h6 class="fw-bold mb-0 text-primary">Task Priority Distribution</h6>
+            </div>
+            <div class="card-body p-4 d-flex align-items-center justify-content-center">
+                <div style="position: relative; height: 220px; width: 100%;">
+                    <canvas id="priorityChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Line Chart: Completion Trend -->
+    <div class="col-lg-4 mb-4">
+        <div class="card shadow-sm border-0 h-100">
+            <div class="card-header bg-white border-bottom p-4">
+                <h6 class="fw-bold mb-0 text-primary">Weekly Completion Pace</h6>
+            </div>
+            <div class="card-body p-4 d-flex align-items-center justify-content-center">
+                <div style="position: relative; height: 220px; width: 100%;">
+                    <canvas id="trendChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Lower Dashboard: Recent Activity Feed & Quick Links -->
+<div class="row fade-in-up">
+    <!-- Recent Activity Feed -->
+    <div class="col-lg-8 mb-4">
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white border-bottom p-4">
+                <h5 class="mb-0 fw-bold"><i class="fa-solid fa-list-ul text-primary me-2"></i>Audit Trail & Team Activity</h5>
+            </div>
+            <div class="card-body p-0">
+                {% if recent_activities %}
+                    <div class="list-group list-group-flush">
+                        {% for log in recent_activities %}
+                            <div class="list-group-item p-3 border-0 border-bottom">
+                                <div class="d-flex align-items-start">
+                                    <div class="rounded-circle bg-light p-2 me-3 text-center" style="width: 36px; height: 36px; display: inline-flex; align-items: center; justify-content: center;">
+                                        {% if log.action_type == 'LOGIN' %}
+                                            <i class="fa-solid fa-right-to-bracket text-primary small"></i>
+                                        {% elif log.action_type == 'TASK_CREATE' %}
+                                            <i class="fa-solid fa-square-plus text-success small"></i>
+                                        {% elif log.action_type == 'TASK_STATUS_CHANGE' %}
+                                            <i class="fa-solid fa-arrows-spin text-warning small"></i>
+                                        {% elif log.action_type == 'TASK_COMMENT' %}
+                                            <i class="fa-regular fa-comment text-info small"></i>
+                                        {% else %}
+                                            <i class="fa-solid fa-clipboard text-secondary small"></i>
+                                        {% endif %}
+                                    </div>
+                                    <div class="flex-grow-1 text-start">
+                                        <div class="d-flex justify-content-between">
+                                            <span class="fw-semibold small text-primary">{{ log.actor.get_full_name|default:log.actor.username|default:"System" }}</span>
+                                            <span class="text-muted small" style="font-size: 0.7rem;">{{ log.timestamp|timesince }} ago</span>
+                                        </div>
+                                        <p class="text-secondary mb-0 small mt-1">{{ log.description }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-center py-5 text-muted small">
+                        No team activities recorded yet.
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Operations & Teams Summary -->
+    <div class="col-lg-4 mb-4">
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-header bg-white border-bottom p-4">
+                <h5 class="mb-0 fw-bold"><i class="fa-solid fa-bolt text-primary me-2"></i>Quick Actions</h5>
+            </div>
+            <div class="card-body p-4 text-start">
+                <div class="d-grid gap-2">
+                    {% if user.is_team_lead or user.is_admin %}
+                        <a href="{% url 'tasks:task_create' %}" class="btn btn-primary text-white py-2" style="background-color: var(--accent-color); border: none;">
+                            <i class="fa-solid fa-plus me-2"></i>Create Work Task
+                        </a>
+                        <a href="{% url 'teams:team_create' %}" class="btn btn-outline-primary py-2">
+                            <i class="fa-solid fa-users-rectangle me-2"></i>Form New Team
+                        </a>
+                    {% endif %}
+                    <a href="{% url 'tasks:task_list' %}?assignee=me" class="btn btn-light py-2">
+                        <i class="fa-solid fa-briefcase me-2 text-secondary"></i>My Assigned Tasks
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- ChartJS CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // 1. Status Doughnut Chart
+    const statusCtx = document.getElementById('statusChart').getContext('2d');
+    new Chart(statusCtx, {
+        type: 'doughnut',
+        data: {
+            labels: {{ status_labels|safe }},
+            datasets: [{
+                data: {{ status_values|safe }},
+                backgroundColor: [
+                    '#f59e0b', // Pending (Amber)
+                    '#3b82f6', // In Progress (Blue)
+                    '#10b981', // Completed (Emerald)
+                    '#ef4444', // Blocked (Red)
+                    '#64748b'  // Closed (Gray)
+                ],
+                borderWidth: 2,
+                hoverOffset: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: { boxWidth: 12, font: { family: 'Outfit', size: 11 } }
+                }
+            }
+        }
+    });
+
+    // 2. Priority Bar Chart
+    const priorityCtx = document.getElementById('priorityChart').getContext('2d');
+    new Chart(priorityCtx, {
+        type: 'bar',
+        data: {
+            labels: {{ priority_labels|safe }},
+            datasets: [{
+                label: 'Task Count',
+                data: {{ priority_values|safe }},
+                backgroundColor: [
+                    'rgba(16, 185, 129, 0.75)',  // Low (Emerald)
+                    'rgba(59, 130, 246, 0.75)',  // Medium (Blue)
+                    'rgba(245, 158, 11, 0.75)',  // High (Amber)
+                    'rgba(239, 68, 68, 0.75)'    // Critical (Red)
+                ],
+                borderColor: [
+                    '#10b981', '#3b82f6', '#f59e0b', '#ef4444'
+                ],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: { stepSize: 1, font: { family: 'Outfit' } }
+                },
+                x: {
+                    ticks: { font: { family: 'Outfit' } }
+                }
+            },
+            plugins: {
+                legend: { display: false }
+            }
+        }
+    });
+
+    // 3. Weekly Trend Line Chart
+    const trendCtx = document.getElementById('trendChart').getContext('2d');
+    new Chart(trendCtx, {
+        type: 'line',
+        data: {
+            labels: {{ trend_labels|safe }},
+            datasets: [{
+                label: 'Tasks Completed',
+                data: {{ trend_values|safe }},
+                fill: true,
+                borderColor: '#10b981',
+                backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                tension: 0.3,
+                borderWidth: 2,
+                pointBackgroundColor: '#10b981',
+                pointRadius: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: { stepSize: 1, font: { family: 'Outfit' } }
+                },
+                x: {
+                    ticks: { font: { family: 'Outfit' } }
+                }
+            },
+            plugins: {
+                legend: { display: false }
+            }
+        }
+    });
+</script>
+{% endblock %}

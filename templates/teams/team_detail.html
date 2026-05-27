@@ -1,0 +1,182 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ team.name }} - OpsFlow{% endblock %}
+{% block page_header %}Team Profile: {{ team.name }}{% endblock %}
+
+{% block content %}
+<div class="row fade-in-up">
+    <!-- Main Left Content: Team Details & Tasks -->
+    <div class="col-lg-8 mb-4">
+        <!-- Team Bio Card -->
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-body p-4">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="fw-bold mb-0 text-primary"><i class="fa-solid fa-circle-info me-2"></i>About Team</h5>
+                    <span class="text-muted small">Created on {{ team.created_at|date:"M d, Y" }} by {{ team.created_by.get_full_name|default:team.created_by.username }}</span>
+                </div>
+                <p class="text-secondary mb-0">
+                    {{ team.description|default:"No description has been added for this team. Click edit details to write a description." }}
+                </p>
+            </div>
+        </div>
+        
+        <!-- Team Tasks Card -->
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white border-bottom p-4 d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 fw-bold"><i class="fa-solid fa-list-check text-primary me-2"></i>Team Tasks</h5>
+                <a href="{% url 'tasks:task_create' %}?team={{ team.pk }}" class="btn btn-outline-primary btn-sm">
+                    <i class="fa-solid fa-plus me-1"></i>New Team Task
+                </a>
+            </div>
+            <div class="card-body p-0">
+                {% if tasks %}
+                    <div class="table-responsive border-0 rounded-0">
+                        <table class="table align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Task ID / Title</th>
+                                    <th>Assignee</th>
+                                    <th>Status</th>
+                                    <th>Priority</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for task in tasks %}
+                                    <tr>
+                                        <td>
+                                            <a href="{% url 'tasks:task_detail' task.pk %}" class="fw-bold text-decoration-none text-dark">
+                                                #{{ task.id }} - {{ task.title }}
+                                            </a>
+                                            {% if task.due_date %}
+                                                <div class="text-muted small"><i class="fa-regular fa-calendar-check me-1"></i>Due: {{ task.due_date }}</div>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            {% if task.assigned_to %}
+                                                <div class="d-flex align-items-center">
+                                                    {% if task.assigned_to.profile_picture %}
+                                                        <img src="{{ task.assigned_to.profile_picture.url }}" alt="avatar" class="rounded-circle me-2" style="width: 25px; height: 25px; object-fit: cover;">
+                                                    {% else %}
+                                                        <div class="rounded-circle bg-secondary text-white d-flex align-items-center justify-content-center me-2" style="width: 25px; height: 25px; font-size: 0.7rem; font-weight: bold;">
+                                                            {{ task.assigned_to.first_name|slice:":1" }}{{ task.assigned_to.last_name|slice:":1" }}
+                                                        </div>
+                                                    {% endif %}
+                                                    <span class="small">{{ task.assigned_to.get_full_name }}</span>
+                                                </div>
+                                            {% else %}
+                                                <span class="text-muted small">Unassigned</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <span class="badge-status badge-status-{{ task.status }}">
+                                                {{ task.get_status_display }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <span class="badge-priority badge-priority-{{ task.priority }}">
+                                                {{ task.get_priority_display }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <a href="{% url 'tasks:task_detail' task.pk %}" class="btn btn-light btn-sm text-primary">
+                                                <i class="fa-solid fa-eye"></i>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center py-5">
+                        <i class="fa-solid fa-clipboard-list fa-3x text-muted opacity-50 mb-3"></i>
+                        <h6>No active tasks for this team</h6>
+                        <p class="text-muted small">Tasks created and linked to this team will show up here.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Right Sidebar Content: Members List -->
+    <div class="col-lg-4 mb-4">
+        <!-- Add Team Member Card -->
+        {% if is_lead %}
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-white border-bottom p-4">
+                    <h5 class="mb-0 fw-bold"><i class="fa-solid fa-user-plus text-primary me-2"></i>Add Team Member</h5>
+                </div>
+                <div class="card-body p-4">
+                    <form method="POST" action="{% url 'teams:add_team_member' team.pk %}">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="user_id" class="form-label small fw-semibold">Select User</label>
+                            <select name="user_id" id="user_id" class="form-select" required>
+                                <option value="" disabled selected>Choose a user...</option>
+                                {% for user_opt in available_users %}
+                                    <option value="{{ user_opt.id }}">{{ user_opt.get_full_name }} (@{{ user_opt.username }})</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label for="role" class="form-label small fw-semibold">Team Role</label>
+                            <select name="role" id="role" class="form-select">
+                                <option value="MEMBER">Member</option>
+                                <option value="LEAD">Team Lead</option>
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-sm w-100 py-2" style="background-color: var(--accent-color); border: none;">
+                            Add to Team
+                        </button>
+                    </form>
+                </div>
+            </div>
+        {% endif %}
+
+        <!-- Members Directory Card -->
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white border-bottom p-4">
+                <h5 class="mb-0 fw-bold"><i class="fa-solid fa-address-book text-primary me-2"></i>Members Directory</h5>
+            </div>
+            <div class="card-body p-4">
+                <div class="d-flex flex-column gap-3">
+                    {% for member in members %}
+                        <div class="d-flex align-items-center justify-content-between">
+                            <div class="d-flex align-items-center">
+                                {% if member.user.profile_picture %}
+                                    <img src="{{ member.user.profile_picture.url }}" alt="avatar" class="rounded-circle" style="width: 35px; height: 35px; object-fit: cover;">
+                                {% else %}
+                                    <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center" style="width: 35px; height: 35px; font-size: 0.8rem; font-weight: bold;">
+                                        {{ member.user.first_name|slice:":1" }}{{ member.user.last_name|slice:":1" }}
+                                    </div>
+                                {% endif %}
+                                <div class="ms-2">
+                                    <div class="fw-semibold small">{{ member.user.get_full_name }}</div>
+                                    <div class="text-muted small" style="font-size: 0.7rem;">
+                                        {% if member.role == 'LEAD' %}
+                                            <span class="text-danger fw-semibold"><i class="fa-solid fa-crown me-1"></i>Team Lead</span>
+                                        {% else %}
+                                            Member
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Remove member option -->
+                            {% if is_lead %}
+                                <!-- Block self removal if sole lead, otherwise allow -->
+                                {% if member.user != request.user or team.memberships.count > 1 %}
+                                    <a href="{% url 'teams:remove_team_member' team.pk member.pk %}" class="btn btn-outline-danger btn-sm border-0" onclick="return confirm('Are you sure you want to remove {{ member.user.username }} from the team?');" style="padding: 2px 6px;">
+                                        <i class="fa-solid fa-trash-can small"></i>
+                                    </a>
+                                {% endif %}
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

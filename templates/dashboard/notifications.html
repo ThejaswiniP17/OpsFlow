@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+
+{% block title %}Notifications - OpsFlow{% endblock %}
+{% block page_header %}Notifications Centre{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 fade-in-up">
+    <div>
+        <p class="text-secondary mb-0">Stay updated on task assignments, comments, and project statuses.</p>
+    </div>
+    {% if notifications %}
+        <form method="POST" action="{% url 'dashboard:mark_all_read' %}">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-outline-primary btn-sm">
+                <i class="fa-solid fa-check-double me-1"></i>Mark All Read
+            </button>
+        </form>
+    {% endif %}
+</div>
+
+<div class="row justify-content-center fade-in-up">
+    <div class="col-lg-10">
+        <div class="card shadow-sm border-0">
+            <div class="card-body p-0">
+                {% if notifications %}
+                    <div class="list-group list-group-flush">
+                        {% for item in notifications %}
+                            <div class="list-group-item p-4 border-0 border-bottom {% if not item.is_read %}bg-light border-start border-primary border-4{% endif %}" style="transition: all 0.2s ease;">
+                                <div class="d-flex align-items-start justify-content-between">
+                                    <div class="text-start flex-grow-1">
+                                        <div class="d-flex align-items-center gap-2 mb-1">
+                                            <h6 class="fw-bold mb-0 {% if not item.is_read %}text-primary{% else %}text-secondary{% endif %}">
+                                                {{ item.title }}
+                                            </h6>
+                                            {% if not item.is_read %}
+                                                <span class="badge bg-primary rounded-pill" style="font-size: 0.65rem;">New</span>
+                                            {% endif %}
+                                        </div>
+                                        <p class="text-secondary mb-1 small">{{ item.message }}</p>
+                                        <span class="text-muted small" style="font-size: 0.72rem;">
+                                            <i class="fa-regular fa-clock me-1"></i>{{ item.created_at|date:"M d, Y H:i" }} ({{ item.created_at|timesince }} ago)
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-center py-5">
+                        <div class="my-4">
+                            <i class="fa-regular fa-bell-slash fa-4x text-muted opacity-50"></i>
+                        </div>
+                        <h5 class="fw-bold">All caught up!</h5>
+                        <p class="text-muted">You have no in-app notifications at this time.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

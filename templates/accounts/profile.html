@@ -1,0 +1,100 @@
+{% extends 'base.html' %}
+
+{% block title %}My Profile - OpsFlow{% endblock %}
+{% block page_header %}My Profile Settings{% endblock %}
+
+{% block content %}
+<div class="row fade-in-up">
+    <!-- Profile Card Summary -->
+    <div class="col-lg-4 mb-4">
+        <div class="card h-100 shadow-sm border-0">
+            <div class="card-body text-center p-4">
+                <div class="position-relative d-inline-block mb-3">
+                    {% if user.profile_picture %}
+                        <img src="{{ user.profile_picture.url }}" alt="Avatar" class="rounded-circle img-thumbnail" style="width: 120px; height: 120px; object-fit: cover;">
+                    {% else %}
+                        <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center mx-auto" style="width: 120px; height: 120px; font-size: 3rem; font-weight: bold;">
+                            {{ user.first_name|slice:":1" }}{{ user.last_name|slice:":1" }}
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <h4 class="mb-1 fw-bold">{{ user.get_full_name }}</h4>
+                <p class="text-muted mb-2">@{{ user.username }}</p>
+                
+                <span class="badge bg-secondary mb-4 px-3 py-2 fs-6 rounded-pill" style="background-color: var(--primary-light) !important;">
+                    {{ user.get_role_display }}
+                </span>
+                
+                {% if user.bio %}
+                    <p class="text-secondary small mt-3 px-3">"{{ user.bio }}"</p>
+                {% else %}
+                    <p class="text-secondary small mt-3 px-3 italic text-muted">No bio provided yet.</p>
+                {% endif %}
+                
+                <hr>
+                
+                <div class="text-start mt-4">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted small">Date Joined:</span>
+                        <span class="fw-medium small">{{ user.date_joined|date:"M d, Y" }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted small">Email Address:</span>
+                        <span class="fw-medium small text-truncate" style="max-width: 200px;">{{ user.email }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Edit Profile Form -->
+    <div class="col-lg-8 mb-4">
+        <div class="card shadow-sm border-0 h-100">
+            <div class="card-header bg-white border-bottom p-4">
+                <h5 class="mb-0 fw-bold"><i class="fa-solid fa-user-pen me-2 text-primary"></i>Edit Profile Information</h5>
+            </div>
+            <div class="card-body p-4">
+                <form method="POST" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="id_first_name" class="form-label">First Name</label>
+                            <input type="text" name="first_name" required id="id_first_name" class="form-control" value="{{ form.first_name.value|default:'' }}">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="id_last_name" class="form-label">Last Name</label>
+                            <input type="text" name="last_name" required id="id_last_name" class="form-control" value="{{ form.last_name.value|default:'' }}">
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="id_email" class="form-label">Email Address</label>
+                        <input type="email" name="email" required id="id_email" class="form-control" value="{{ form.email.value|default:'' }}">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="id_bio" class="form-label">Bio (Short Description)</label>
+                        <textarea name="bio" id="id_bio" class="form-control" rows="4" placeholder="Write something about your role, achievements, or interests...">{{ form.bio.value|default:'' }}</textarea>
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label for="id_profile_picture" class="form-label">Change Profile Picture</label>
+                        <input type="file" name="profile_picture" id="id_profile_picture" class="form-control">
+                        {% if user.profile_picture %}
+                            <div class="form-text text-muted">Currently: <a href="{{ user.profile_picture.url }}" target="_blank" class="text-decoration-none text-primary">{{ user.profile_picture.name }}</a></div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="d-flex justify-content-end gap-2 border-top pt-4">
+                        <button type="submit" class="btn btn-primary" style="background-color: var(--accent-color); border: none;">
+                            <i class="fa-solid fa-floppy-disk me-1"></i>Save Changes
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

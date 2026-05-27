@@ -1,0 +1,189 @@
+{% extends 'base.html' %}
+
+{% block title %}Task #{{ task.id }}: {{ task.title }} - OpsFlow{% endblock %}
+{% block page_header %}Task Details #{{ task.id }}{% endblock %}
+
+{% block content %}
+<div class="row fade-in-up">
+    <!-- Left Column: Task Details and Comments -->
+    <div class="col-lg-8 mb-4">
+        <!-- Main Task details -->
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-body p-4">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <span class="badge-status badge-status-{{ task.status }} fs-6 px-3 py-2">
+                        {{ task.get_status_display }}
+                    </span>
+                    <span class="badge-priority badge-priority-{{ task.priority }} fs-6 px-3 py-1">
+                        Priority: {{ task.get_priority_display }}
+                    </span>
+                </div>
+                
+                <h3 class="fw-bold mb-3">{{ task.title }}</h3>
+                
+                <div class="mb-4">
+                    <h5 class="fw-bold text-muted mb-2 small text-uppercase">Description</h5>
+                    <div class="p-3 bg-light rounded text-secondary" style="white-space: pre-wrap; min-height: 100px;">{{ task.description|default:"No detailed description was provided for this task." }}</div>
+                </div>
+                
+                {% if task.attachment %}
+                    <div class="mb-2">
+                        <h5 class="fw-bold text-muted mb-2 small text-uppercase">Attachments</h5>
+                        <div class="d-inline-flex align-items-center p-2 border rounded bg-light">
+                            <i class="fa-regular fa-file-lines fa-2x me-2 text-primary"></i>
+                            <div class="me-3 text-start">
+                                <div class="small fw-semibold text-truncate" style="max-width: 250px;">{{ task.attachment.name }}</div>
+                                <div class="text-muted small">File Uploaded</div>
+                            </div>
+                            <a href="{{ task.attachment.url }}" download class="btn btn-primary btn-sm">
+                                <i class="fa-solid fa-download"></i> Download
+                            </a>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Comments Section -->
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white border-bottom p-4">
+                <h5 class="mb-0 fw-bold"><i class="fa-regular fa-comments text-primary me-2"></i>Discussion Feed</h5>
+            </div>
+            <div class="card-body p-4">
+                <!-- Add Comment Form -->
+                <form method="POST" action="{% url 'tasks:add_comment' task.pk %}" class="mb-4">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <textarea name="content" required class="form-control" rows="3" placeholder="Post a comment, ask a question, or leave status updates..."></textarea>
+                    </div>
+                    <div class="d-flex justify-content-end">
+                        <button type="submit" class="btn btn-primary btn-sm px-3" style="background-color: var(--accent-color); border: none;">
+                            Post Comment
+                        </button>
+                    </div>
+                </form>
+                
+                <hr class="mb-4">
+                
+                <!-- Comments List -->
+                <div class="d-flex flex-column gap-3">
+                    {% if comments %}
+                        {% for comment in comments %}
+                            <div class="d-flex align-items-start p-3 bg-light rounded" style="position: relative;">
+                                {% if comment.user.profile_picture %}
+                                    <img src="{{ comment.user.profile_picture.url }}" alt="avatar" class="rounded-circle me-3" style="width: 40px; height: 40px; object-fit: cover;">
+                                {% else %}
+                                    <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center me-3" style="width: 40px; height: 40px; font-weight: bold; flex-shrink: 0;">
+                                        {{ comment.user.first_name|slice:":1" }}{{ comment.user.last_name|slice:":1" }}
+                                    </div>
+                                {% endif %}
+                                <div class="text-start flex-grow-1">
+                                    <div class="d-flex justify-content-between mb-1">
+                                        <span class="fw-semibold text-primary small">{{ comment.user.get_full_name }} <span class="text-muted small fw-normal">(@{{ comment.user.username }})</span></span>
+                                        <span class="text-muted small" style="font-size: 0.75rem;">{{ comment.created_at|date:"M d, Y H:i" }}</span>
+                                    </div>
+                                    <p class="text-secondary mb-0 small" style="white-space: pre-wrap;">{{ comment.content }}</p>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-center py-4 text-muted small">
+                            No comments posted yet. Be the first to start the discussion!
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Right Column: Workflow Actions & Metadata -->
+    <div class="col-lg-4 mb-4">
+        <!-- Actions Card -->
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-header bg-white border-bottom p-4">
+                <h5 class="mb-0 fw-bold"><i class="fa-solid fa-rotate text-primary me-2"></i>Workflow Actions</h5>
+            </div>
+            <div class="card-body p-4">
+                <!-- Quick Status Update -->
+                <form method="POST" action="{% url 'tasks:quick_update' task.pk %}" class="mb-4">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="status">
+                    <label for="status" class="form-label small fw-semibold">Update Task Status</label>
+                    <div class="d-flex gap-2">
+                        <select name="status" id="status" class="form-select form-select-sm">
+                            {% for code, label in task.STATUS_CHOICES %}
+                                <option value="{{ code }}" {% if task.status == code %}selected{% endif %}>{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                        <button type="submit" class="btn btn-primary btn-sm px-3" style="background-color: var(--accent-color); border: none;">
+                            Update
+                        </button>
+                    </div>
+                </form>
+
+                <!-- Reassign Task (Leads and Admins only) -->
+                {% if is_lead %}
+                    <form method="POST" action="{% url 'tasks:quick_update' task.pk %}" class="mb-4">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="assignee">
+                        <label for="assigned_to" class="form-label small fw-semibold">Reassign Task</label>
+                        <div class="d-flex gap-2">
+                            <select name="assigned_to" id="assigned_to" class="form-select form-select-sm">
+                                <option value="">Unassigned</option>
+                                {% for member in team_members %}
+                                    <option value="{{ member.user.id }}" {% if task.assigned_to == member.user %}selected{% endif %}>{{ member.user.get_full_name }}</option>
+                                {% endfor %}
+                            </select>
+                            <button type="submit" class="btn btn-primary btn-sm px-3" style="background-color: var(--accent-color); border: none;">
+                                Assign
+                            </button>
+                        </div>
+                    </form>
+                {% endif %}
+                
+                <div class="border-top pt-3 d-flex flex-column gap-2">
+                    {% if is_lead or task.created_by == request.user %}
+                        <a href="{% url 'tasks:task_update' task.pk %}" class="btn btn-outline-primary btn-sm w-100 py-2">
+                            <i class="fa-solid fa-pen-to-square me-1"></i>Edit Details
+                        </a>
+                    {% endif %}
+                    {% if is_lead %}
+                        <a href="{% url 'tasks:task_delete' task.pk %}" class="btn btn-outline-danger btn-sm w-100 py-2">
+                            <i class="fa-solid fa-trash-can me-1"></i>Delete Task
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Task Metadata Card -->
+        <div class="card shadow-sm border-0">
+            <div class="card-header bg-white border-bottom p-4">
+                <h5 class="mb-0 fw-bold"><i class="fa-solid fa-paperclip text-primary me-2"></i>Task Meta</h5>
+            </div>
+            <div class="card-body p-4 text-start">
+                <div class="d-flex justify-content-between mb-3 border-bottom pb-2">
+                    <span class="text-muted small">Team:</span>
+                    <a href="{% url 'teams:team_detail' task.team.pk %}" class="fw-semibold small text-decoration-none">{{ task.team.name }}</a>
+                </div>
+                <div class="d-flex justify-content-between mb-3 border-bottom pb-2">
+                    <span class="text-muted small">Current Assignee:</span>
+                    <span class="fw-semibold small">{{ task.assigned_to.get_full_name|default:"Unassigned" }}</span>
+                </div>
+                <div class="d-flex justify-content-between mb-3 border-bottom pb-2">
+                    <span class="text-muted small">Created By:</span>
+                    <span class="fw-semibold small">{{ task.created_by.get_full_name|default:"System" }}</span>
+                </div>
+                <div class="d-flex justify-content-between mb-3 border-bottom pb-2">
+                    <span class="text-muted small">Deadline Date:</span>
+                    <span class="fw-semibold small">{{ task.due_date|default:"None" }}</span>
+                </div>
+                <div class="d-flex justify-content-between">
+                    <span class="text-muted small">Last Activity:</span>
+                    <span class="fw-semibold small text-muted" style="font-size: 0.75rem;">{{ task.updated_at|date:"M d, Y H:i" }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

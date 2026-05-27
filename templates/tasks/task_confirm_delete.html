@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+
+{% block title %}Delete Task - OpsFlow{% endblock %}
+{% block page_header %}Confirm Task Deletion{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center fade-in-up">
+    <div class="col-lg-6">
+        <div class="card border-danger shadow-sm">
+            <div class="card-header bg-danger text-white p-3">
+                <h5 class="mb-0 fw-bold"><i class="fa-solid fa-triangle-exclamation me-2"></i>Warning: Deletion is Permanent</h5>
+            </div>
+            <div class="card-body p-4 text-center">
+                <p class="fs-5">Are you sure you want to delete task <strong>#{{ object.id }} - {{ object.title }}</strong>?</p>
+                <p class="text-secondary small">This will permanently delete this task record, its file attachments, and all associated comment logs. This action cannot be undone.</p>
+                
+                <form method="POST" class="mt-4 d-flex justify-content-center gap-2">
+                    {% csrf_token %}
+                    <a href="{% url 'tasks:task_detail' object.pk %}" class="btn btn-outline-secondary">
+                        Cancel, Keep Task
+                    </a>
+                    <button type="submit" class="btn btn-danger px-4">
+                        <i class="fa-solid fa-trash-can me-1"></i>Delete Permanently
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
