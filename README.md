@@ -8,9 +8,15 @@ Designed as an interview-ready full-stack portfolio project, the backend is buil
 
 ## Application Previews
 
-| Login Page | Dashboard Analytics Overview |
+### Design System & Mockups
+| UI Concept: Login Page | UI Concept: Dashboard Analytics |
 | :---: | :---: |
-| ![Login Page](screenshots/login.png) | ![Dashboard Overview](screenshots/dashboard.png) |
+| ![Login Page Concept](screenshots/login.png) | ![Dashboard Concept](screenshots/dashboard.png) |
+
+### Live Application Screenshots (Running Locally)
+| Live Login Interface | Live Dashboard Analytics |
+| :---: | :---: |
+| ![Live Login Interface](screenshots/actual_login.png) | ![Live Dashboard Analytics](screenshots/actual_dashboard.png) |
 
 ---
 
