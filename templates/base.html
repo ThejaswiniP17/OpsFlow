@@ -22,7 +22,7 @@
         <!-- Sidebar -->
         <div id="sidebar-wrapper">
             <div class="sidebar-heading">
-                <i class="fa-solid fa-square-poll-horizontal me-2 text-primary"></i>OpsFlow
+                <i class="fa-solid fa-square-poll-horizontal me-2"></i>OpsFlow
             </div>
             <div class="list-group list-group-flush">
                 <a href="{% url 'dashboard:index' %}" class="list-group-item list-group-item-action {% if request.resolver_match.app_name == 'dashboard' %}active{% endif %}">
@@ -73,7 +73,7 @@
                         <i class="fa-solid fa-bars"></i>
                     </button>
                     
-                    <h4 class="mb-0 fw-semibold text-primary">{% block page_header %}Overview{% endblock %}</h4>
+                    <h4 class="mb-0 fw-semibold">{% block page_header %}Overview{% endblock %}</h4>
                     
                     <div class="ms-auto d-flex align-items-center gap-3">
                         <!-- Notifications -->

@@ -6,6 +6,14 @@ Designed as an interview-ready full-stack portfolio project, the backend is buil
 
 ---
 
+## Application Previews
+
+| Login Page | Dashboard Analytics Overview |
+| :---: | :---: |
+| ![Login Page](screenshots/login.png) | ![Dashboard Overview](screenshots/dashboard.png) |
+
+---
+
 ## Key Modules & Features
 
 1. **Authentication & Custom User Model**: Extends Django's `AbstractUser` to support system-wide roles (`ADMIN`, `TEAM_LEAD`, `MEMBER`). Implements **dual-auth** (Session auth for template navigation and **Simple JWT** tokens for secure REST API access).
